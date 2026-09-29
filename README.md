@@ -8,6 +8,38 @@ Play [Diagramium](https://www.diagramium.com) diagrams step by step in any web p
 - **Programmable.** Chainable controls, step events, live node restyling, fonts and themes.
 - **Private by design.** It makes no network requests of its own, sets no cookies, and collects nothing.
 
+## How it works
+
+![How diagramium-player works: draw in the Diagramium editor, save diagram.json, load it with the player, and control it from your code](docs/how-it-works.svg)
+
+<sub>This picture is itself a Diagramium diagram — drawn in the editor, exported as an animated SVG ([PNG](docs/how-it-works.png)), and saved as [`examples/how-it-works.json`](examples/how-it-works.json), which the player can play.</sub>
+
+**1. Make it.** Draw your diagram in the [Diagramium editor](https://www.diagramium.com) (free, no account), add a short note to each step, then **File → Save**. You get one portable `.json` file.
+
+**2. Load it.**
+
+```js
+import { DiagramiumPlayer } from 'diagramium-player';
+
+const player = await DiagramiumPlayer.fromUrl('/how-it-works.json', {
+  container: '#diagram',
+  theme: 'glassmorphism',
+});
+```
+
+**3. Control it from your code.**
+
+```js
+player.setTheme('bento-card');                          // 'linear-midnight', or your own colour tokens
+player.setFont({ family: 'Georgia, serif', size: 16 }); // or { scale: 1.25 }; shapes resize to fit
+player.updateNodeStyle('c3', {                          // live data on any node
+  glow: '#22c55e',
+  badge: { text: 'live' },
+});
+player.goToStep(2).play();                              // or next(), prev(), pause()
+player.on('step', (e) => console.log(e.index, e.note)); // keep your own UI in sync
+```
+
 ## Try it
 
 **▶ [Live demo](https://diagramium.github.io/diagramium-player/)** — pick an example, press Play, switch themes and fonts, or **drop your own Diagramium `.json`** on the player. Nothing to install.
