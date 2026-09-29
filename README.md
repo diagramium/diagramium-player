@@ -30,14 +30,18 @@ const player = await DiagramiumPlayer.fromUrl('/how-it-works.json', {
 **3. Control it from your code.**
 
 ```js
-player.setTheme('bento-card');                          // 'linear-midnight', or your own colour tokens
-player.setFont({ family: 'Georgia, serif', size: 16 }); // or { scale: 1.25 }; shapes resize to fit
-player.updateNodeStyle('c3', {                          // live data on any node
-  glow: '#22c55e',
-  badge: { text: 'live' },
-});
-player.goToStep(2).play();                              // or next(), prev(), pause()
-player.on('step', (e) => console.log(e.index, e.note)); // keep your own UI in sync
+// look: 'glassmorphism', 'linear-midnight', 'bento-card' or your own tokens
+player.setTheme('bento-card');
+
+// type: family, size or scale — shapes resize to fit
+player.setFont({ family: 'Georgia, serif', size: 16 });
+
+// live data on any node: colours, glow, text, a status badge
+player.updateNodeStyle('c3', { glow: '#22c55e', badge: { text: 'live' } });
+
+// the story: goToStep, next, prev, play, pause — and events to sync your UI
+player.goToStep(2).play();
+player.on('step', (e) => console.log(e.index, e.note));
 ```
 
 ## Try it
