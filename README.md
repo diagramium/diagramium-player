@@ -129,4 +129,4 @@ npm run build      # dist/index.js (ESM), dist/index.cjs (CJS), dist/index.d.ts
 
 The code is [MIT](LICENSE) © 2026 DhuRee Labs Inc.
 
-"Diagramium" and the Diagramium logo are trademarks of DhuRee Labs Inc. The MIT licence covers the code only; it does not grant rights to the name or logo. The example diagrams in `examples/` are not covered by the MIT licence — see [examples/README.md](examples/README.md).
+The example diagrams in `examples/` are not covered by the MIT licence — see [examples/README.md](examples/README.md).
