@@ -1,0 +1,67 @@
+{
+  "name": "diagramium-player",
+  "version": "0.1.0",
+  "description": "Play Diagramium diagrams step by step in any web page — animated, captioned, programmable SVG. Zero runtime dependencies.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsc -p tsconfig.build.json && node scripts/copy-cts.mjs",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview",
+    "prepublishOnly": "npm run typecheck && npm test",
+    "sync-shapes": "node scripts/sync-shapes.mjs",
+    "test": "npm run build && node --test \"tests/*.test.mjs\""
+  },
+  "keywords": [
+    "diagram",
+    "diagram-player",
+    "svg",
+    "animation",
+    "animated-diagrams",
+    "flowchart",
+    "architecture-diagram",
+    "step-by-step",
+    "web-animations",
+    "embed",
+    "diagramium"
+  ],
+  "homepage": "https://www.diagramium.com",
+  "author": "DhuRee Labs Inc. (https://www.diagramium.com)",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^8.3.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diagramium/diagramium-player.git"
+  },
+  "bugs": {
+    "url": "https://github.com/diagramium/diagramium-player/issues"
+  }
+}

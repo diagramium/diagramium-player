@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>diagramium-player — demo</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root { color-scheme: dark; --ink: #e5e7eb; --muted: #9ca3af; --line: #1f2937; --accent: #38bdf8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #05070c; color: var(--ink); font: 15px/1.55 Inter, system-ui, sans-serif; }
+    header { padding: 22px 28px 8px; }
+    header h1 { margin: 0; font-size: 20px; }
+    header p { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; }
+    code { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--accent); }
+    main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; padding: 16px 28px 28px; }
+    @media (max-width: 960px) { main { grid-template-columns: 1fr; } }
+    #diagram { height: 560px; border: 1px solid var(--line); border-radius: 12px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+    button, select { font: inherit; font-size: 13.5px; color: var(--ink); background: #0b0f19; border: 1px solid #2b3445;
+      border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+    button:hover, select:hover { border-color: var(--accent); }
+    button.primary { background: var(--accent); color: #031018; border-color: var(--accent); font-weight: 600; }
+    .sep { width: 1px; height: 24px; background: var(--line); margin: 0 4px; }
+    aside { border: 1px solid var(--line); border-radius: 12px; padding: 16px; align-self: start; }
+    #docs { max-height: 380px; overflow: auto; scroll-behavior: smooth; }
+    aside h2 { margin: 0 0 10px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+    #docs { margin: 0; padding-left: 30px; display: grid; gap: 8px; }
+    #docs li { cursor: pointer; color: var(--muted); padding: 6px 8px; border-radius: 8px; transition: background .2s, color .2s; }
+    #docs li b { color: var(--ink); display: block; font-size: 13.5px; }
+    #docs li.on { background: rgba(56,189,248,.1); color: var(--ink); box-shadow: inset 2px 0 0 var(--accent); }
+    #log { margin-top: 14px; height: 120px; overflow: auto; font: 12px ui-monospace, Menlo, monospace; color: var(--muted);
+      border-top: 1px solid var(--line); padding-top: 10px; white-space: pre-wrap; }
+    #error { color: #f87171; }
+    .source { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+    .source .src-name { color: var(--muted); font-size: 13px; }
+    .source .src-name b { color: var(--ink); font-weight: 600; }
+    .stage { position: relative; }
+    .size-ctl { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--muted);
+      background: #0b0f19; border: 1px solid #2b3445; border-radius: 8px; padding: 5px 10px; }
+    .size-ctl input { width: 120px; accent-color: var(--accent); }
+    .size-ctl output { min-width: 34px; color: var(--ink); font: 600 12.5px ui-monospace, Menlo, monospace; }
+    .drop-hint { position: absolute; inset: 0; display: none; place-items: center; border-radius: 12px; z-index: 5;
+      border: 2px dashed var(--accent); background: rgba(5, 7, 12, .78); color: var(--ink); font-size: 16px; font-weight: 600; }
+    .stage.is-over .drop-hint { display: grid; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>diagramium-player <span style="color:var(--muted);font-weight:400">— playback engine test harness</span></h1>
+    <p>Real Diagramium files, loaded unchanged — pick an example, <b>open your own <code>.json</code></b> (File → Save in the editor), or drop one on the player. Then drive it from the buttons below.</p>
+  </header>
+
+  <main>
+    <section>
+      <div class="source">
+        <select id="example" aria-label="Example diagram">
+          <option value="" id="yourFile" disabled hidden>Your file</option>
+          <option value="api-request-handling.json">Example: API request handling</option>
+          <option value="microservices-architecture.json">Example: Microservices architecture</option>
+          <option value="arch-url-shortener.json">Example: URL shortener</option>
+        </select>
+        <button id="open" type="button">📂 Open .json…</button>
+        <input id="file" type="file" accept=".json,application/json" hidden>
+        <span class="src-name" id="srcName"></span>
+      </div>
+      <div class="stage" id="stage">
+        <div id="diagram"></div>
+        <div class="drop-hint" aria-hidden="true">Drop a Diagramium .json file to play it</div>
+      </div>
+      <div class="controls">
+        <button id="play" class="primary" type="button">▶ Play</button>
+        <button id="pause" type="button">❚❚ Pause</button>
+        <button id="prev" type="button">← Prev</button>
+        <button id="next" type="button">Next →</button>
+        <select id="goto" aria-label="Go to step"></select>
+        <span class="sep"></span>
+        <select id="theme" aria-label="Theme">
+          <option value="linear-midnight">Linear Midnight</option>
+          <option value="bento-card">Bento Card</option>
+          <option value="glassmorphism">Glassmorphism</option>
+        </select>
+        <span class="sep"></span>
+        <select id="fontFamily" aria-label="Font">
+          <option value="">Font: document</option>
+          <option value="inter">Inter</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="mono">Monospace</option>
+          <option value="slab">Slab</option>
+          <option value="handwriting">Handwriting</option>
+        </select>
+        <label class="size-ctl" title="Label size for every node — player.setFont({ size })">
+          <span>Text size</span>
+          <input id="fontSize" type="range" min="8" max="32" step="1" value="13" aria-label="Font size in pixels">
+          <output id="fontSizeOut">file</output>
+        </label>
+        <button id="fontSizeReset" type="button" title="Back to the sizes saved in the file — player.setFont({ size: null })">Reset size</button>
+        <span class="sep"></span>
+        <button id="health" type="button">Simulate live health</button>
+        <button id="reset" type="button">Reset styles</button>
+      </div>
+      <p id="error" role="alert"></p>
+    </section>
+
+    <aside>
+      <h2>Documentation (synced)</h2>
+      <ol id="docs"></ol>
+      <div id="log" aria-label="Event log"></div>
+    </aside>
+  </main>
+
+  <script type="module">
+    // In a consuming app: import { DiagramiumPlayer } from 'diagramium-player';
+    import { DiagramiumPlayer } from './src/index.ts';
+
+    const $ = (id) => document.getElementById(id);
+    const log = (msg) => { $('log').textContent = `${new Date().toLocaleTimeString()}  ${msg}\n` + $('log').textContent; };
+    const HEALTH_LABEL = 'Simulate live health';
+    let player = null;
+    let feed = null;
+
+    // Programmatic type: the same object goes to the constructor and to setFont().
+    // null size = use each node's size from the file; the slider sets one size for every label.
+    let fontSize = null;
+    function currentFont() {
+      return { family: $('fontFamily').value || undefined, size: fontSize };
+    }
+    function showSize() { $('fontSizeOut').textContent = fontSize == null ? 'file' : fontSize + 'px'; }
+
+    function stopFeed() {
+      if (feed) { clearInterval(feed); feed = null; }
+      $('health').textContent = HEALTH_LABEL;
+    }
+
+    /* ONE door for every source — an example URL, an opened file, a dropped
+       file. The new player is built FIRST; only if the document parses is the
+       old one destroyed, so a bad file leaves the current diagram playing. */
+    function mount(source, label) {
+      let next;
+      try {
+        next = new DiagramiumPlayer({
+          container: '#diagram',
+          source,
+          theme: $('theme').value,
+          font: currentFont(),
+          stepDuration: 3200,
+          initialStep: 0,
+        });
+      } catch (err) {
+        $('error').textContent = `Could not open ${label}: ${err && err.message ? err.message : err}`;
+        log(`open failed — ${label}`);
+        return false;
+      }
+      stopFeed();
+      if (player) player.destroy();
+      player = next;
+      window.player = player;   // poke at it from the console
+      $('error').textContent = '';
+      $('srcName').innerHTML = '';
+      const b = document.createElement('b');
+      b.textContent = player.diagram.title || label;
+      $('srcName').append('Playing ', b, ` · ${player.total} steps · ${label}`);
+
+      // External documentation built from the diagram's own steps, kept in sync.
+      $('docs').replaceChildren();
+      $('goto').replaceChildren();
+      player.diagram.steps.forEach((s, i) => {
+        const node = player.diagram.nodes.find((n) => n.id === s.nodeId);
+        const li = document.createElement('li');
+        const t = document.createElement('b');
+        t.textContent = node ? node.label : s.nodeId;
+        li.append(t, document.createTextNode(s.note));
+        li.addEventListener('click', () => player.pause().goToStep(i));
+        $('docs').append(li);
+        $('goto').append(new Option(`Step ${i + 1}: ${node ? node.label : s.nodeId}`, String(i)));
+      });
+
+      player
+        .on('ready', (e) => log(`ready — "${e.title}", ${e.total} steps`))
+        .on('step', (e) => {
+          [...$('docs').children].forEach((li, i) => li.classList.toggle('on', i === e.index));
+          const li = $('docs').children[e.index];
+          if (li) $('docs').scrollTop = li.offsetTop - $('docs').offsetTop - 8;   // scroll the panel, never the page
+          if (e.index >= 0) $('goto').value = String(e.index);
+          log(`step ${e.index + 1}/${e.total} → ${e.nodeId}`);
+        })
+        .on('play', () => log('play'))
+        .on('pause', () => log('pause'))
+        .on('end', () => log('end of sequence'))
+        .on('error', (e) => log('listener error: ' + e.error.message));
+      return true;
+    }
+
+    async function loadExample(file) {
+      try {
+        const res = await fetch('./examples/' + file);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        mount(await res.json(), file);
+      } catch (err) {
+        $('error').textContent = `Could not load ${file}: ${err.message}`;
+      }
+    }
+
+    async function openFile(file) {
+      if (!file) return;
+      if (!/\.json$/i.test(file.name) && file.type !== 'application/json') {
+        $('error').textContent = `${file.name} is not a .json file.`;
+        return;
+      }
+      if (file.size > 25 * 1024 * 1024) {
+        $('error').textContent = `${file.name} is larger than 25 MB.`;
+        return;
+      }
+      // Hand the TEXT to the player: it parses and validates it (bad JSON or an
+      // unsupported document type comes back as a DiagramiumFormatError).
+      if (mount(await file.text(), file.name)) {
+        $('yourFile').hidden = false;
+        $('yourFile').textContent = 'Your file: ' + file.name;
+        $('example').value = '';
+      }
+    }
+
+    // Controls always talk to whichever player is current.
+    $('play').onclick = () => player && player.play();
+    $('pause').onclick = () => player && player.pause();
+    $('prev').onclick = () => player && player.pause().prev();
+    $('next').onclick = () => player && player.pause().next();
+    $('goto').onchange = (ev) => player && player.pause().goToStep(Number(ev.target.value));
+    $('theme').onchange = (ev) => player && player.setTheme(ev.target.value);
+    // setFont(null) = back to the document's own fonts; otherwise merge the choice.
+    const applyFont = () => {
+      if (!player) return;
+      const f = currentFont();
+      player.setFont(f);   // an undefined family / null size falls back to the document
+      log(`setFont(${JSON.stringify(f)})`);
+    };
+    $('fontFamily').onchange = applyFont;
+    // The slider redraws live while dragging (one setFont per frame) and logs once on release.
+    let sizeFrame = 0;
+    $('fontSize').oninput = (ev) => {
+      fontSize = Number(ev.target.value); showSize();
+      cancelAnimationFrame(sizeFrame);
+      sizeFrame = requestAnimationFrame(() => player && player.setFont(currentFont()));
+    };
+    $('fontSize').onchange = () => log(`setFont(${JSON.stringify(currentFont())})`);
+    $('fontSizeReset').onclick = () => { fontSize = null; $('fontSize').value = 13; showSize(); applyFont(); };
+    $('example').onchange = (ev) => { if (ev.target.value) { $('yourFile').hidden = true; loadExample(ev.target.value); } };
+    $('open').onclick = () => $('file').click();
+    $('file').onchange = (ev) => { openFile(ev.target.files[0]); ev.target.value = ''; };
+
+    // Drag a .json from Finder / Explorer onto the player.
+    const stage = $('stage');
+    let depth = 0;
+    stage.addEventListener('dragenter', (e) => { e.preventDefault(); depth++; stage.classList.add('is-over'); });
+    stage.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+    stage.addEventListener('dragleave', () => { if (--depth <= 0) { depth = 0; stage.classList.remove('is-over'); } });
+    stage.addEventListener('drop', (e) => {
+      e.preventDefault(); depth = 0; stage.classList.remove('is-over');
+      openFile(e.dataTransfer.files && e.dataTransfer.files[0]);
+    });
+
+    // Real-time data integration: restyle the CURRENT step's node from a
+    // (simulated) metrics feed — works on any diagram, not one hard-coded id.
+    $('health').onclick = () => {
+      if (!player) return;
+      if (feed) { stopFeed(); return; }
+      const step = player.diagram.steps[Math.max(0, player.currentStep)];
+      const id = step ? step.nodeId : player.diagram.nodes[0].id;
+      const label = (player.diagram.nodes.find((n) => n.id === id) || {}).label || id;
+      $('health').textContent = 'Stop simulation';
+      const tick = () => {
+        const ms = Math.round(2 + Math.random() * 140);
+        const state = ms < 40 ? ['#22c55e', 'healthy'] : ms < 100 ? ['#f59e0b', 'slow'] : ['#ef4444', 'degraded'];
+        player.updateNodeStyle(id, {
+          text: `${label}\n${ms} ms p95`,
+          stroke: state[0],
+          glow: state[0],
+          badge: { text: state[1], color: state[0] },
+        });
+        log(`metrics → ${id} ${ms}ms (${state[1]})`);
+      };
+      tick();
+      feed = setInterval(tick, 1500);
+    };
+    $('reset').onclick = () => { stopFeed(); if (player) player.resetNodeStyle(); };
+
+    $('example').value = 'api-request-handling.json';
+    loadExample($('example').value);
+  </script>
+</body>
+</html>
