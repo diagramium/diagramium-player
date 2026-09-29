@@ -1,6 +1,6 @@
 # Example diagrams
 
-Three real Diagramium files, used by the demo page (`index.html`) and the tests:
+Three real Diagramium files, used by the demo page (`index.html`), the tests, and `minimal.html` — the smallest page that plays one:
 
 | File | What it shows |
 | --- | --- |

@@ -12,6 +12,9 @@
     header { padding: 22px 28px 8px; }
     header h1 { margin: 0; font-size: 20px; }
     header p { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; }
+    header p b { color: var(--ink); }
+    header .links a { color: var(--accent); text-decoration: none; }
+    header .links a:hover { text-decoration: underline; }
     code { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--accent); }
     main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; padding: 16px 28px 28px; }
     @media (max-width: 960px) { main { grid-template-columns: 1fr; } }
@@ -47,8 +50,14 @@
 </head>
 <body>
   <header>
-    <h1>diagramium-player <span style="color:var(--muted);font-weight:400">— playback engine test harness</span></h1>
-    <p>Real Diagramium files, loaded unchanged — pick an example, <b>open your own <code>.json</code></b> (File → Save in the editor), or drop one on the player. Then drive it from the buttons below.</p>
+    <h1>diagramium-player <span style="color:var(--muted);font-weight:400">— live demo</span></h1>
+    <p>Diagrams that explain themselves, step by step, in any web page.
+      <b>1.</b> Pick an example or <b>open your own <code>.json</code></b> (drop it on the player).
+      <b>2.</b> Press <b>▶ Play</b>, or step with ← →.
+      <b>3.</b> Try the theme, font and size controls, and <b>Simulate live health</b> to restyle a node from code.</p>
+    <p class="links"><a href="https://github.com/diagramium/diagramium-player">GitHub &amp; docs</a> ·
+      <a href="https://github.com/diagramium/diagramium-player#install">Install</a> ·
+      <a href="https://www.diagramium.com">Make a diagram in the free editor</a></p>
   </header>
 
   <main>

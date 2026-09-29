@@ -32,7 +32,8 @@
     "preview": "vite preview",
     "prepublishOnly": "npm run typecheck && npm test",
     "sync-shapes": "node scripts/sync-shapes.mjs",
-    "test": "npm run build && node --test \"tests/*.test.mjs\""
+    "test": "npm run build && node --test \"tests/*.test.mjs\"",
+    "build:demo": "vite build --config vite.demo.config.ts"
   },
   "keywords": [
     "diagram",

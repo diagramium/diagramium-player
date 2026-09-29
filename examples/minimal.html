@@ -1,0 +1,27 @@
+<!doctype html>
+<!-- The smallest possible page: one diagram, playing.
+     Run `npm run build` first, then serve the repo folder
+     (e.g. `npx serve .`) and open /examples/minimal.html.
+     In your own site, import from 'diagramium-player' instead. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>diagramium-player — minimal</title>
+  <link rel="icon" href="data:,">
+</head>
+<body style="margin:0; padding:24px; background:#f5f5f5; font-family:system-ui, sans-serif">
+  <div id="diagram" style="height:520px; max-width:960px; margin:auto"></div>
+  <script type="module">
+    import { DiagramiumPlayer } from '../dist/index.js';
+
+    const player = await DiagramiumPlayer.fromUrl('./api-request-handling.json', {
+      container: '#diagram',
+      theme: 'bento-card',
+      autoplay: true,
+      loop: true,
+    });
+    player.on('step', (e) => console.log(`step ${e.index + 1}/${e.total}:`, e.note || e.label));
+  </script>
+</body>
+</html>

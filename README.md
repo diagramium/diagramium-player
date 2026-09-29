@@ -8,6 +8,25 @@ Play [Diagramium](https://www.diagramium.com) diagrams step by step in any web p
 - **Programmable.** Chainable controls, step events, live node restyling, fonts and themes.
 - **Private by design.** It makes no network requests of its own, sets no cookies, and collects nothing.
 
+## Try it
+
+**▶ [Live demo](https://diagramium.github.io/diagramium-player/)** — pick an example, press Play, switch themes and fonts, or **drop your own Diagramium `.json`** on the player. Nothing to install.
+
+Or run the same demo locally:
+
+```bash
+git clone https://github.com/diagramium/diagramium-player.git
+cd diagramium-player
+npm install
+npm run dev          # serves the demo at http://localhost:5173
+```
+
+[`examples/minimal.html`](examples/minimal.html) is the smallest page that plays a diagram — about ten lines to copy into your own site.
+
+No diagram yet? Make one in the [Diagramium editor](https://www.diagramium.com) (free, no account) and save it with **File → Save**.
+
+## Install
+
 ```bash
 npm install diagramium-player
 ```
