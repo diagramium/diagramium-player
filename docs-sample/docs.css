@@ -1,0 +1,71 @@
+/* A plain, typical documentation theme — shared by both sample pages so the
+   ONLY difference between them is the diagram. */
+:root {
+  --bg: #ffffff; --ink: #0f172a; --muted: #475569; --faint: #94a3b8;
+  --line: #e2e8f0; --soft: #f8fafc; --accent: #4f46e5; --accent-soft: #eef2ff;
+  --code-bg: #0f172a; --code-ink: #e2e8f0;
+  --font: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 var(--font); }
+a { color: var(--accent); }
+
+/* ---- top bar ---- */
+.topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 16px;
+  height: 56px; padding: 0 24px; background: rgba(255,255,255,.92); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line); }
+.topbar .logo { font-weight: 800; letter-spacing: -.02em; color: var(--ink); text-decoration: none; }
+.topbar .logo span { color: var(--accent); }
+.topbar .sep { color: var(--faint); }
+.topbar .crumb { color: var(--muted); font-size: 14px; }
+.topbar .spacer { flex: 1; }
+.topbar .switch { font-size: 13px; font-weight: 600; text-decoration: none; padding: 6px 12px;
+  border: 1px solid var(--line); border-radius: 999px; color: var(--ink); }
+.topbar .switch:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- layout ---- */
+.layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); max-width: 1320px; margin: 0 auto; }
+.sidenav { position: sticky; top: 56px; align-self: start; height: calc(100vh - 56px); overflow: auto;
+  padding: 28px 16px 28px 24px; border-right: 1px solid var(--line); font-size: 14px; }
+.sidenav h4 { margin: 18px 0 6px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.sidenav h4:first-child { margin-top: 0; }
+.sidenav a { display: block; padding: 4px 8px; margin: 0 -8px; border-radius: 6px; color: var(--muted); text-decoration: none; }
+.sidenav a:hover { background: var(--soft); color: var(--ink); }
+.sidenav a.here { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.content { padding: 36px 48px 120px; min-width: 0; }
+.content > header { max-width: 760px; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { margin: 6px 0 10px; font-size: 34px; line-height: 1.2; letter-spacing: -.02em; }
+.lede { margin: 0 0 24px; color: var(--muted); font-size: 18px; }
+h2 { margin: 0 0 8px; font-size: 21px; letter-spacing: -.01em; display: flex; align-items: center; gap: 10px; }
+p { margin: 0 0 14px; }
+code { font: 13.5px var(--mono); background: var(--soft); border: 1px solid var(--line); padding: 1px 5px; border-radius: 5px; }
+pre { margin: 0 0 16px; padding: 14px 16px; background: var(--code-bg); color: var(--code-ink);
+  border-radius: 10px; overflow: auto; font: 13px/1.6 var(--mono); }
+pre code { background: none; border: 0; padding: 0; color: inherit; }
+.note { margin: 0 0 16px; padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--accent-soft);
+  border-radius: 0 8px 8px 0; font-size: 14.5px; color: #312e81; }
+
+/* ---- a step section ---- */
+.step { max-width: 760px; padding: 26px 0 30px; border-top: 1px solid var(--line); }
+.num { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 999px; flex: none;
+  background: var(--soft); border: 1px solid var(--line); color: var(--muted); font: 700 12px var(--font); }
+
+/* ---- the static figure (static.html) ---- */
+.figure { max-width: 900px; margin: 0 0 28px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); }
+.figure img { display: block; width: 100%; height: auto; }
+.figure figcaption { margin-top: 8px; font-size: 13px; color: var(--muted); text-align: center; }
+
+@media (max-width: 640px) {
+  .topbar { gap: 10px; padding: 0 14px; }
+  .topbar .sep, .topbar .crumb { display: none; }
+  .topbar .switch { padding: 5px 10px; font-size: 12px; white-space: nowrap; }
+}
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidenav { display: none; }
+  .content { padding: 24px 18px 100px; }
+  h1 { font-size: 28px; }
+}

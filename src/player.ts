@@ -59,7 +59,6 @@ export class DiagramiumPlayer {
   private readonly opts: Required<Omit<PlayerOptions, 'container' | 'source' | 'theme' | 'ariaLabel' | 'font'>> & { ariaLabel: string };
   private theme: ThemeTokens;
   private readonly uid = `dgm${++instanceCounter}`;
-  private readonly host: HTMLElement;
   private readonly shadow: ShadowRoot;
   private readonly rootEl: HTMLDivElement;
   private readonly styleEl: HTMLStyleElement;
@@ -87,7 +86,6 @@ export class DiagramiumPlayer {
       ? document.querySelector<HTMLElement>(options.container)
       : options.container;
     if (!host) throw new Error(`Diagramium: container ${String(options.container)} was not found.`);
-    this.host = host;
 
     this.theme = resolveTheme(options.theme);
     this.source = options.source;
@@ -287,9 +285,9 @@ export class DiagramiumPlayer {
     this.running.forEach((a) => a.cancel());
     this.rootEl.removeEventListener('keydown', this.onKey);
     this.listeners.clear();
-    /* Remove only OUR nodes. The shadow root belongs to the host element and
-       may already hold the player that replaces this one (build new → destroy
-       old); clearing the whole root wiped the successor's diagram. */
+    /* Remove only this player's nodes. The shadow root belongs to the host
+       element and may already hold the player that replaces this one
+       (build new, then destroy old), so clearing the whole root is wrong. */
     this.rootEl.remove();
     this.styleEl.remove();
   }
@@ -584,8 +582,8 @@ export class DiagramiumPlayer {
     return defs;
   }
 
-  /* Geometry mirrors the editor's drawNodeShape (graphtool + the fork
-     editors), in node-local coordinates: the centre is (0, 0). */
+  /* Shape geometry matching the editor's, in node-local coordinates: the
+     centre is (0, 0). */
   private buildShape(n: LayoutNode): SVGGraphicsElement {
     const w = n.w, h = n.h, hw = w / 2, hh = h / 2, x = -hw, y = -hh;
     const r = n.style.cornerRadius ?? (parseFloat(this.theme.borderRadius) || 0);

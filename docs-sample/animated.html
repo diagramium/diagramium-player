@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How checkout works — animated diagram</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="docs.css">
+  <style>
+    /* The diagram is pinned as a band across the top of the reading column, full
+       width — wide diagrams stay legible — and the prose scrolls underneath it. */
+    .stage { position: sticky; top: 56px; z-index: 5; display: flex; flex-direction: column; gap: 10px;
+      max-width: 1100px; height: min(48vh, 500px); min-height: 280px; margin: 0 0 8px; padding: 10px 0 12px;
+      background: var(--bg); border-bottom: 1px solid var(--line); }
+    #diagram { flex: 1; min-height: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+    .stage-bar { display: flex; align-items: center; gap: 10px; font-size: 13.5px; white-space: nowrap; }
+    .stage-bar button, .stage-bar select { font: inherit; font-weight: 600; padding: 7px 14px; border-radius: 999px;
+      border: 1px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; }
+    .stage-bar button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .stage-bar .where { color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+    .step { transition: opacity .3s ease; scroll-margin-top: calc(56px + min(48vh, 500px) + 24px); }
+    .step:not(.is-active) { opacity: .5; }
+    .step .num { cursor: pointer; }
+    .step.is-active .num { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .step.is-active h2 { color: var(--accent); }
+    /* room below the last section, so it can reach the reading line */
+    .content { padding-bottom: 60vh; }
+    @media (max-width: 900px) {
+      .stage { height: 40vh; min-height: 240px; }
+      .step { scroll-margin-top: calc(56px + 40vh + 16px); }
+      .stage-bar button, .stage-bar select { padding: 6px 11px; }
+    }
+    @media (max-width: 640px) {
+      /* a phone: the frame takes the diagram's own (wide) shape, no empty bands */
+      .stage { height: auto; min-height: 0; }
+      #diagram { flex: none; aspect-ratio: 16 / 9; }
+      .step { scroll-margin-top: calc(56px + 56vw + 80px); }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .step { transition: none; } }
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <a class="logo" href="index.html">Acme<span>Shop</span> Docs</a>
+  <span class="sep">/</span><span class="crumb">Guides / How checkout works</span>
+  <span class="spacer"></span>
+  <a class="switch" href="static.html">← See the static version</a>
+</div>
+<div class="layout">
+  <nav class="sidenav" aria-label="Docs">
+    <h4>Get started</h4>
+    <a href="#">Overview</a>
+    <a href="#">Authentication</a>
+    <h4>Guides</h4>
+    <a class="here" href="#">How checkout works</a>
+    <a href="#">Refunds</a>
+    <a href="#">Webhooks</a>
+    <h4>Reference</h4>
+    <a href="#">Orders API</a>
+    <a href="#">Errors</a>
+  </nav>
+  <main class="content">
+  <header>
+    <div class="eyebrow">Guide · Orders API</div>
+    <h1>How checkout works</h1>
+    <p class="lede">What happens between a customer pressing <em>Pay</em> and the receipt landing in their inbox —
+      one <code>POST /v2/orders</code>, eight steps.</p>
+  </header>
+    <aside class="stage" aria-label="Checkout flow diagram">
+      <div id="diagram"></div>
+      <div class="stage-bar">
+        <button id="tour" class="primary" type="button">▶ Play the tour</button>
+        <select id="theme" aria-label="Diagram theme">
+          <option value="bento-card">Bento Card</option>
+          <option value="linear-midnight">Linear Midnight</option>
+          <option value="glassmorphism">Glassmorphism</option>
+        </select>
+        <span class="where" id="where">Step 1 of 8</span>
+      </div>
+    </aside>
+<section class="step" id="request" data-step="0">
+  <h2><span class="num">1</span>The request</h2>
+  <p>The web shop creates an order by calling <code>POST /v2/orders</code> with the cart and the customer's access token.
+    Send an <code>Idempotency-Key</code> so a retried request can never create a second order.</p>
+<pre><code>POST /v2/orders HTTP/1.1
+Authorization: Bearer eyJhbGciOi…
+Idempotency-Key: 7f3c1a90-…
+Content-Type: application/json
+
+{ "items": [{ "sku": "MUG-01", "qty": 2 }], "currency": "CAD" }</code></pre>
+</section>
+
+<section class="step" id="gateway" data-step="1">
+  <h2><span class="num">2</span>API gateway</h2>
+  <p>Every call enters through the gateway. It enforces a limit of <strong>100 requests per minute per API key</strong>
+    and routes <code>/v2/orders</code> to the orders service. Over the limit, it answers <code>429 Too Many Requests</code>
+    with a <code>Retry-After</code> header.</p>
+</section>
+
+<section class="step" id="auth" data-step="2">
+  <h2><span class="num">3</span>Authentication</h2>
+  <p>Before forwarding, the gateway asks the auth service to verify the token — signature, expiry and the
+    <code>orders:write</code> scope. A missing or invalid token stops the request here.</p>
+<pre><code>HTTP/1.1 401 Unauthorized
+{ "error": "invalid_token", "message": "The access token has expired." }</code></pre>
+</section>
+
+<section class="step" id="orders" data-step="3">
+  <h2><span class="num">4</span>Orders service</h2>
+  <p>The orders service checks every SKU and quantity against the catalogue, prices the cart and creates the
+    order with status <code>pending</code>. An invalid cart is rejected with <code>422</code> and a list of problems.</p>
+</section>
+
+<section class="step" id="database" data-step="4">
+  <h2><span class="num">5</span>Orders database</h2>
+  <p>The order is written to PostgreSQL in a single transaction, together with the idempotency key.
+    If the same key arrives again, the service returns the original order instead of creating a new one.</p>
+  <p class="note">Idempotency keys are kept for 24 hours.</p>
+</section>
+
+<section class="step" id="payment" data-step="5">
+  <h2><span class="num">6</span>Payment</h2>
+  <p>The orders service charges the card through the payment provider. On success the order becomes
+    <code>paid</code>. A decline marks it <code>failed</code> and the API returns <code>402 Payment Required</code>
+    with the provider's reason.</p>
+<pre><code>HTTP/1.1 201 Created
+{ "id": "ord_9Qx2", "status": "paid", "total": { "amount": 3200, "currency": "CAD" } }</code></pre>
+</section>
+
+<section class="step" id="events" data-step="6">
+  <h2><span class="num">7</span>Event bus</h2>
+  <p>Once paid, the service publishes an <code>order.created</code> event. Anything that reacts to new orders —
+    fulfilment, analytics, the receipt — subscribes to this event instead of being called directly.</p>
+</section>
+
+<section class="step" id="receipt" data-step="7">
+  <h2><span class="num">8</span>Receipt email</h2>
+  <p>The email worker consumes <code>order.created</code> and sends the receipt. It runs after the API has already
+    answered, so the customer never waits for email — and a slow mail provider can't fail a checkout.</p>
+</section>
+  </main>
+</div>
+
+<script type="module">
+  // In your own docs: import { DiagramiumPlayer } from 'diagramium-player';
+  import { DiagramiumPlayer } from '../src/index.ts';
+
+  const $ = (s) => document.querySelector(s);
+  const sections = [...document.querySelectorAll('.step[data-step]')];
+
+  // 1. Load the diagram saved from the Diagramium editor (File → Save).
+  const player = await DiagramiumPlayer.fromUrl('./checkout-flow.json', {
+    container: '#diagram',
+    theme: 'bento-card',
+    showCaption: false,       // the prose on the left IS the caption
+    initialStep: 0,
+    stepDuration: 4000,
+  });
+
+  let active = -1;
+  let touring = false;
+
+  function mark(i) {
+    if (i === active) return;
+    active = i;
+    sections.forEach((s, k) => s.classList.toggle('is-active', k === i));
+    $('#where').textContent = `Step ${i + 1} of ${sections.length}`;
+  }
+
+  // 2. Reading drives the diagram: the section being read is the step on
+  //    screen. One step forward animates in; a jump is instant.
+  function show(i) {
+    mark(i);
+    if (i === player.currentStep) return;
+    if (i === player.currentStep + 1) player.next();
+    else player.goToStep(i);
+  }
+  //    "Being read" = the section crossing the reading line (a third of the way
+  //    down the text, below the pinned diagram), or the nearest one to it.
+  function sectionAtCentre() {
+    const stage = document.querySelector('.stage').getBoundingClientRect();
+    const line = stage.bottom + (innerHeight - stage.bottom) * 0.35;   // a third of the way into the text
+    let best = 0, bestDist = Infinity;
+    sections.forEach((s, k) => {
+      const r = s.getBoundingClientRect();
+      const d = r.top <= line && r.bottom >= line ? 0 : Math.min(Math.abs(r.top - line), Math.abs(r.bottom - line));
+      if (d < bestDist) { bestDist = d; best = k; }
+    });
+    return best;
+  }
+  let queued = false;
+  addEventListener('scroll', () => {
+    if (touring || queued) return;
+    queued = true;
+    requestAnimationFrame(() => { queued = false; show(sectionAtCentre()); });
+  }, { passive: true });
+
+  // 3. …and the tour runs the other way: the diagram plays, the page follows.
+  function stopTour() {
+    touring = false;
+    player.pause();
+    $('#tour').textContent = '▶ Play the tour';
+  }
+  player.on('step', (e) => {
+    if (!touring || e.index < 0) return;
+    mark(e.index);
+    sections[e.index].scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  player.on('end', stopTour);
+  $('#tour').addEventListener('click', () => {
+    if (touring) { stopTour(); return; }
+    touring = true;
+    $('#tour').textContent = '❚❚ Pause the tour';
+    player.goToStep(-1).play();
+  });
+  // Scrolling by hand hands control back to the reader.
+  ['wheel', 'touchmove', 'keydown'].forEach((t) => addEventListener(t, () => { if (touring) stopTour(); }, { passive: true }));
+
+  // Step numbers jump to their section; the theme switch is one call.
+  sections.forEach((s) => s.querySelector('.num').addEventListener('click', () =>
+    s.scrollIntoView({ behavior: 'smooth', block: 'start' })));
+  $('#theme').addEventListener('change', (e) => player.setTheme(e.target.value));
+
+  mark(0);
+</script>
+</body>
+</html>

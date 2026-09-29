@@ -8,7 +8,7 @@ import { resolve } from 'node:path';
  * Type declarations are emitted separately by `tsc -p tsconfig.build.json`
  * (see the `build` script), so the build needs no Vite plugin.
  *
- * `npm run dev` serves index.html (the test harness) straight from src/.
+ * `npm run dev` serves index.html (the demo page) straight from src/.
  */
 export default defineConfig({
   build: {
@@ -16,7 +16,7 @@ export default defineConfig({
     sourcemap: true,
     emptyOutDir: true,
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
+      entry: resolve(import.meta.dirname, 'src/index.ts'),
       name: 'Diagramium',
       formats: ['es', 'cjs'],
       fileName: (format) => (format === 'es' ? 'index.js' : 'index.cjs'),

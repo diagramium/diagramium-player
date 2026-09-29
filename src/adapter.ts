@@ -122,8 +122,8 @@ export function measureText(text: string, fontFamily: string, size = 12.5, weigh
 
 /* ------------------------------------------------------ fonts & shapes -- */
 
-/** The editor's named type stacks (render.js FONT_STACKS). A node's
-    `fontFamily` holds one of these KEYS; anything else is used as a CSS stack. */
+/** The editor's named font stacks. A node's `fontFamily` holds one of these
+    KEYS; anything else is used as a CSS font-family list. */
 const FONT_STACKS: Record<string, string> = {
   serif: "Georgia, Cambria, 'Times New Roman', Times, serif",
   mono: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
@@ -154,7 +154,7 @@ export function fontStack(family: unknown, fallback: string): string {
 /** The player-wide type settings (PlayerOptions.font / setFont). */
 export interface ResolvedFont { family: string; size: number | null; weight: number | null; scale: number }
 
-/* The editor's own shape families (SHAPE_DEFS render + its drawNodeShape switch). */
+/* Which drawing family a node type belongs to — the same families the editor draws. */
 function shapeFor(type: string): ShapeKind {
   const meta = SHAPE_META[type];
   if (meta?.render === 'iconBox') return 'iconBox';
@@ -183,7 +183,8 @@ function shapeFor(type: string): ShapeKind {
   }
 }
 
-/* Natural size per shape family — graphtool naturalDim, same constants. */
+/* A shape's natural size for its label width, using the editor's own constants,
+   so a file plays at the proportions it was drawn at. */
 function naturalSize(shape: ShapeKind, type: string, tw: number): { w: number; h: number } {
   switch (shape) {
     case 'iconBox': return { w: Math.max(120, tw + 44), h: 66 };

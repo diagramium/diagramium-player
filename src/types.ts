@@ -122,7 +122,7 @@ export type DiagramiumDocument =
  * PLAYER CONTRACT
  * ======================================================================== */
 
-/** Visual tokens. The two built-in presets mirror the editor's themes. */
+/** Visual tokens. The three built-in presets mirror the editor's themes. */
 export interface ThemeTokens {
   background: string;
   nodeBg: string;

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How checkout works — static diagram</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<div class="topbar">
+  <a class="logo" href="index.html">Acme<span>Shop</span> Docs</a>
+  <span class="sep">/</span><span class="crumb">Guides / How checkout works</span>
+  <span class="spacer"></span>
+  <a class="switch" href="animated.html">See the animated version →</a>
+</div>
+<div class="layout">
+  <nav class="sidenav" aria-label="Docs">
+    <h4>Get started</h4>
+    <a href="#">Overview</a>
+    <a href="#">Authentication</a>
+    <h4>Guides</h4>
+    <a class="here" href="#">How checkout works</a>
+    <a href="#">Refunds</a>
+    <a href="#">Webhooks</a>
+    <h4>Reference</h4>
+    <a href="#">Orders API</a>
+    <a href="#">Errors</a>
+  </nav>
+  <main class="content">
+  <header>
+    <div class="eyebrow">Guide · Orders API</div>
+    <h1>How checkout works</h1>
+    <p class="lede">What happens between a customer pressing <em>Pay</em> and the receipt landing in their inbox —
+      one <code>POST /v2/orders</code>, eight steps.</p>
+  </header>
+    <figure class="figure">
+      <img src="checkout-flow.svg" alt="Checkout flow: web shop, API gateway, auth service, orders service, orders database, payment provider, event bus and email worker" width="1191" height="540">
+      <figcaption>Figure 1 — The checkout flow. Match each numbered step below to the boxes above.</figcaption>
+    </figure>
+<section class="step" id="request" data-step="0">
+  <h2><span class="num">1</span>The request</h2>
+  <p>The web shop creates an order by calling <code>POST /v2/orders</code> with the cart and the customer's access token.
+    Send an <code>Idempotency-Key</code> so a retried request can never create a second order.</p>
+<pre><code>POST /v2/orders HTTP/1.1
+Authorization: Bearer eyJhbGciOi…
+Idempotency-Key: 7f3c1a90-…
+Content-Type: application/json
+
+{ "items": [{ "sku": "MUG-01", "qty": 2 }], "currency": "CAD" }</code></pre>
+</section>
+
+<section class="step" id="gateway" data-step="1">
+  <h2><span class="num">2</span>API gateway</h2>
+  <p>Every call enters through the gateway. It enforces a limit of <strong>100 requests per minute per API key</strong>
+    and routes <code>/v2/orders</code> to the orders service. Over the limit, it answers <code>429 Too Many Requests</code>
+    with a <code>Retry-After</code> header.</p>
+</section>
+
+<section class="step" id="auth" data-step="2">
+  <h2><span class="num">3</span>Authentication</h2>
+  <p>Before forwarding, the gateway asks the auth service to verify the token — signature, expiry and the
+    <code>orders:write</code> scope. A missing or invalid token stops the request here.</p>
+<pre><code>HTTP/1.1 401 Unauthorized
+{ "error": "invalid_token", "message": "The access token has expired." }</code></pre>
+</section>
+
+<section class="step" id="orders" data-step="3">
+  <h2><span class="num">4</span>Orders service</h2>
+  <p>The orders service checks every SKU and quantity against the catalogue, prices the cart and creates the
+    order with status <code>pending</code>. An invalid cart is rejected with <code>422</code> and a list of problems.</p>
+</section>
+
+<section class="step" id="database" data-step="4">
+  <h2><span class="num">5</span>Orders database</h2>
+  <p>The order is written to PostgreSQL in a single transaction, together with the idempotency key.
+    If the same key arrives again, the service returns the original order instead of creating a new one.</p>
+  <p class="note">Idempotency keys are kept for 24 hours.</p>
+</section>
+
+<section class="step" id="payment" data-step="5">
+  <h2><span class="num">6</span>Payment</h2>
+  <p>The orders service charges the card through the payment provider. On success the order becomes
+    <code>paid</code>. A decline marks it <code>failed</code> and the API returns <code>402 Payment Required</code>
+    with the provider's reason.</p>
+<pre><code>HTTP/1.1 201 Created
+{ "id": "ord_9Qx2", "status": "paid", "total": { "amount": 3200, "currency": "CAD" } }</code></pre>
+</section>
+
+<section class="step" id="events" data-step="6">
+  <h2><span class="num">7</span>Event bus</h2>
+  <p>Once paid, the service publishes an <code>order.created</code> event. Anything that reacts to new orders —
+    fulfilment, analytics, the receipt — subscribes to this event instead of being called directly.</p>
+</section>
+
+<section class="step" id="receipt" data-step="7">
+  <h2><span class="num">8</span>Receipt email</h2>
+  <p>The email worker consumes <code>order.created</code> and sends the receipt. It runs after the API has already
+    answered, so the customer never waits for email — and a slow mail provider can't fail a checkout.</p>
+</section>
+  </main>
+</div>
+</body>
+</html>

@@ -46,15 +46,20 @@ player.on('step', (e) => console.log(e.index, e.note));
 
 ## Try it
 
-**▶ [Live demo](https://diagramium.github.io/diagramium-player/)** — pick an example, press Play, switch themes and fonts, or **drop your own Diagramium `.json`** on the player. Nothing to install.
+Two live demos — nothing to install:
 
-Or run the same demo locally:
+| | |
+| --- | --- |
+| **▶ [Player playground](https://diagramium.github.io/diagramium-player/)** | Pick an example, press Play, switch themes, fonts and sizes, restyle a node from code — or **drop your own Diagramium `.json`** on the player. |
+| **▶ [Documentation, transformed](https://diagramium.github.io/diagramium-player/docs-sample/)** | One API guide, two ways. [Before](https://diagramium.github.io/diagramium-player/docs-sample/static.html): a static picture at the top of the page. [After](https://diagramium.github.io/diagramium-player/docs-sample/animated.html): the same diagram pinned above the text, building up as you read, highlighting the part each section is about — or play it as a guided tour. ([source](docs-sample/)) |
+
+Or run both locally:
 
 ```bash
 git clone https://github.com/diagramium/diagramium-player.git
 cd diagramium-player
 npm install
-npm run dev          # serves the demo at http://localhost:5173
+npm run dev          # the playground at http://localhost:5173, the docs demo at /docs-sample/
 ```
 
 [`examples/minimal.html`](examples/minimal.html) is the smallest page that plays a diagram — about ten lines to copy into your own site.
