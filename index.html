@@ -65,9 +65,9 @@
       <div class="source">
         <select id="example" aria-label="Example diagram">
           <option value="" id="yourFile" disabled hidden>Your file</option>
+          <option value="arch-url-shortener.json">Example: URL shortener</option>
           <option value="api-request-handling.json">Example: API request handling</option>
           <option value="microservices-architecture.json">Example: Microservices architecture</option>
-          <option value="arch-url-shortener.json">Example: URL shortener</option>
         </select>
         <button id="open" type="button">📂 Open .json…</button>
         <input id="file" type="file" accept=".json,application/json" hidden>
@@ -85,9 +85,9 @@
         <select id="goto" aria-label="Go to step"></select>
         <span class="sep"></span>
         <select id="theme" aria-label="Theme">
+          <option value="glassmorphism" selected>Glassmorphism</option>
           <option value="linear-midnight">Linear Midnight</option>
           <option value="bento-card">Bento Card</option>
-          <option value="glassmorphism">Glassmorphism</option>
         </select>
         <span class="sep"></span>
         <select id="fontFamily" aria-label="Font">
@@ -293,7 +293,7 @@
     };
     $('reset').onclick = () => { stopFeed(); if (player) player.resetNodeStyle(); };
 
-    $('example').value = 'api-request-handling.json';
+    $('example').value = 'arch-url-shortener.json';
     loadExample($('example').value);
   </script>
 </body>
