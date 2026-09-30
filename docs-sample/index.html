@@ -3,12 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Better documentation with animated diagrams — diagramium-player sample</title>
+  <title>Documentation, transformed — diagramium-player demo</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="docs.css">
   <style>
     .wrap { max-width: 980px; margin: 0 auto; padding: 48px 24px 80px; }
-    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 28px 0 36px; }
+    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 14px 0 36px; }
+    .pair-h { margin: 34px 0 4px; font-size: 20px; }
+    .pair-p { margin: 0; color: var(--muted); }
     .card { display: block; padding: 22px; border: 1px solid var(--line); border-radius: 14px; color: var(--ink); text-decoration: none; }
     .card:hover { border-color: var(--accent); box-shadow: 0 10px 30px -18px rgba(79,70,229,.5); }
     .card h3 { margin: 6px 0 8px; font-size: 19px; }
@@ -23,30 +25,45 @@
 </head>
 <body>
 <div class="topbar">
-  <a class="logo" href="index.html">Acme<span>Shop</span> Docs</a>
-  <span class="sep">/</span><span class="crumb">diagramium-player sample</span>
+  <a class="logo" href="index.html">Documentation, <span>transformed</span></a>
+  <span class="sep">/</span><span class="crumb">diagramium-player · Demo 2</span>
   <span class="spacer"></span>
   <a class="switch" href="../">Player playground →</a>
 </div>
 <main class="wrap">
-  <div class="eyebrow">Sample</div>
-  <h1>The same documentation page, two ways</h1>
-  <p class="lede">A made-up API guide, "How checkout works", written once. On the left it has the diagram most docs have:
-    a picture at the top. On the right the same diagram is a Diagramium file played by <code>diagramium-player</code>,
-    in step with the text.</p>
+  <div class="eyebrow">Demo 2</div>
+  <h1>Documentation, transformed</h1>
+  <p class="lede">The same documentation page, two ways. <em>Before</em> has the diagram most docs have: a picture at the
+    top. <em>After</em> plays the same diagram with <code>diagramium-player</code>, pinned above the text and in step
+    with it as you read.</p>
 
+  <h2 class="pair-h">Getting started with Diagramium</h2>
+  <p class="pair-p">A real guide: how to use Diagramium itself — types, ready-mades, notes, themes, Explain, export, save.</p>
+  <div class="cards">
+    <a class="card" href="diagramium-guide-static.html">
+      <span class="tag">Before</span>
+      <h3>Static diagram</h3>
+      <p>Nine steps under one picture. By step five the picture is off the screen.</p>
+    </a>
+    <a class="card after" href="diagramium-guide.html">
+      <span class="tag">After — diagramium-player</span>
+      <h3>Animated, synced diagram</h3>
+      <p>The diagram follows you down the page and highlights the step you are reading. Try the theme switch.</p>
+    </a>
+  </div>
+
+  <h2 class="pair-h">How checkout works</h2>
+  <p class="pair-p">A made-up API guide for a shop: one <code>POST /v2/orders</code>, from the request to the receipt email.</p>
   <div class="cards">
     <a class="card" href="static.html">
       <span class="tag">Before</span>
       <h3>Static diagram</h3>
-      <p>One image above eight sections. The reader scrolls away from it and has to match
-        "step 5" to a box they can no longer see.</p>
+      <p>One image above eight sections. The reader has to match "step 5" to a box they can no longer see.</p>
     </a>
     <a class="card after" href="animated.html">
       <span class="tag">After — diagramium-player</span>
       <h3>Animated, synced diagram</h3>
-      <p>The diagram stays pinned above the text and builds up as you read, highlighting the box each section is about.
-        Or press <em>Play the tour</em> and it walks you through.</p>
+      <p>The diagram builds up as you read. Or press <em>Play the tour</em> and it walks you through.</p>
     </a>
   </div>
 
@@ -59,9 +76,13 @@
     <tr><td>Matches your site</td><td>Whatever the image looks like</td><td><code>setTheme()</code>, <code>setFont()</code> or your own colours</td></tr>
   </table>
 
-  <p style="margin-top:28px">Both pages use the same file: <code>checkout-flow.json</code>, drawn in the
-    <a href="https://www.diagramium.com">Diagramium editor</a>. The static picture is the editor's SVG export of it.
-    The whole integration is about 60 lines of JavaScript at the bottom of <code>animated.html</code>.</p>
+  <p style="margin-top:28px">In each pair, both pages use one file drawn in the
+    <a href="https://www.diagramium.com">Diagramium editor</a> (<code>getting-started.json</code>,
+    <code>checkout-flow.json</code>); the static picture is the editor's SVG export of it. The whole integration is
+    <a href="https://github.com/diagramium/diagramium-player/blob/main/docs-sample/sync-docs.js"><code>sync-docs.js</code></a>
+    — about 90 lines to copy into your own docs — and two lines per page:</p>
+<pre><code>import { syncDocs } from './sync-docs.js';
+syncDocs({ file: './getting-started.json', theme: 'glassmorphism' });</code></pre>
 </main>
 </body>
 </html>

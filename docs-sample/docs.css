@@ -58,6 +58,38 @@ pre code { background: none; border: 0; padding: 0; color: inherit; }
 .figure img { display: block; width: 100%; height: auto; }
 .figure figcaption { margin-top: 8px; font-size: 13px; color: var(--muted); text-align: center; }
 
+/* ---- the animated pages: a pinned diagram above the prose ---- */
+/* The diagram is pinned as a band across the top of the reading column, full
+   width — wide diagrams stay legible — and the prose scrolls underneath it. */
+.stage { position: sticky; top: 56px; z-index: 5; display: flex; flex-direction: column; gap: 10px;
+  max-width: 1100px; height: min(48vh, 500px); min-height: 280px; margin: 0 0 8px; padding: 10px 0 12px;
+  background: var(--bg); border-bottom: 1px solid var(--line); }
+#diagram { flex: 1; min-height: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.stage-bar { display: flex; align-items: center; gap: 10px; font-size: 13.5px; white-space: nowrap; }
+.stage-bar button, .stage-bar select { font: inherit; font-weight: 600; padding: 7px 14px; border-radius: 999px;
+  border: 1px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; }
+.stage-bar button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.stage-bar .where { color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+.synced .step { transition: opacity .3s ease; scroll-margin-top: calc(56px + min(48vh, 500px) + 24px); }
+.synced .step:not(.is-active) { opacity: .5; }
+.synced .step .num { cursor: pointer; }
+.synced .step.is-active .num { background: var(--accent); border-color: var(--accent); color: #fff; }
+.synced .step.is-active h2 { color: var(--accent); }
+/* room below the last section, so it can reach the reading line */
+.synced .content { padding-bottom: 60vh; }
+@media (max-width: 900px) {
+  .stage { height: 40vh; min-height: 240px; }
+  .synced .step { scroll-margin-top: calc(56px + 40vh + 16px); }
+  .stage-bar button, .stage-bar select { padding: 6px 11px; }
+}
+@media (max-width: 640px) {
+  /* a phone: the frame takes the diagram's own (wide) shape, no empty bands */
+  .stage { height: auto; min-height: 0; }
+  #diagram { flex: none; aspect-ratio: 16 / 9; }
+  .synced .step { scroll-margin-top: calc(56px + 56vw + 80px); }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .synced .step { transition: none; } }
+
 @media (max-width: 640px) {
   .topbar { gap: 10px; padding: 0 14px; }
   .topbar .sep, .topbar .crumb { display: none; }

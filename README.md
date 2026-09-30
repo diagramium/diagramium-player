@@ -51,7 +51,7 @@ Two live demos — nothing to install:
 | | |
 | --- | --- |
 | **▶ [Player playground](https://diagramium.github.io/diagramium-player/)** | Pick an example, press Play, switch themes, fonts and sizes, restyle a node from code — or **drop your own Diagramium `.json`** on the player. |
-| **▶ [Documentation, transformed](https://diagramium.github.io/diagramium-player/docs-sample/)** | One API guide, two ways. [Before](https://diagramium.github.io/diagramium-player/docs-sample/static.html): a static picture at the top of the page. [After](https://diagramium.github.io/diagramium-player/docs-sample/animated.html): the same diagram pinned above the text, building up as you read, highlighting the part each section is about — or play it as a guided tour. ([source](docs-sample/)) |
+| **▶ [Documentation, transformed](https://diagramium.github.io/diagramium-player/docs-sample/)** | The same docs page two ways — a static picture at the top vs the same diagram pinned above the text, building up as you read, with a guided tour. Two examples: [Getting started with Diagramium](https://diagramium.github.io/diagramium-player/docs-sample/diagramium-guide.html) ([before](https://diagramium.github.io/diagramium-player/docs-sample/diagramium-guide-static.html)) and a [checkout API guide](https://diagramium.github.io/diagramium-player/docs-sample/animated.html) ([before](https://diagramium.github.io/diagramium-player/docs-sample/static.html)). Reusable code: [`sync-docs.js`](docs-sample/sync-docs.js). |
 
 Or run both locally:
 

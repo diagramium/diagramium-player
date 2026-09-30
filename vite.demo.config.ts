@@ -21,6 +21,8 @@ export default defineConfig({
         docs: resolve(import.meta.dirname, 'docs-sample/index.html'),
         docsStatic: resolve(import.meta.dirname, 'docs-sample/static.html'),
         docsAnimated: resolve(import.meta.dirname, 'docs-sample/animated.html'),
+        guideStatic: resolve(import.meta.dirname, 'docs-sample/diagramium-guide-static.html'),
+        guideAnimated: resolve(import.meta.dirname, 'docs-sample/diagramium-guide.html'),
       },
     },
   },
@@ -31,7 +33,9 @@ export default defineConfig({
     closeBundle() {
       cpSync(resolve(import.meta.dirname, 'examples'), resolve(import.meta.dirname, 'demo-dist/examples'), { recursive: true });
       // the docs sample fetches its diagram file the same way
-      cpSync(resolve(import.meta.dirname, 'docs-sample/checkout-flow.json'), resolve(import.meta.dirname, 'demo-dist/docs-sample/checkout-flow.json'));
+      for (const f of ['checkout-flow.json', 'getting-started.json']) {
+        cpSync(resolve(import.meta.dirname, 'docs-sample', f), resolve(import.meta.dirname, 'demo-dist/docs-sample', f));
+      }
     },
   }],
 });

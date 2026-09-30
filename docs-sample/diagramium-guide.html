@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Getting started with Diagramium — animated diagram</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="docs.css">
+</head>
+<body class="synced">
+<div class="topbar">
+  <a class="logo" href="index.html">Diagram<span>ium</span> Docs</a>
+  <span class="sep">/</span><span class="crumb">Start here / Getting started</span>
+  <span class="spacer"></span>
+  <a class="switch" href="diagramium-guide-static.html">← See the static version</a>
+</div>
+<div class="layout">
+  <nav class="sidenav" aria-label="Docs">
+    <h4>Start here</h4>
+    <a class="here" href="#">Getting started</a>
+    <a href="#">Diagram types</a>
+    <h4>Make</h4>
+    <a href="#">Ready-made diagrams</a>
+    <a href="#">Step notes</a>
+    <a href="#">Themes</a>
+    <h4>Share</h4>
+    <a href="#">Explain &amp; record</a>
+    <a href="#">Export</a>
+    <a href="#">Save &amp; open</a>
+  </nav>
+  <main class="content">
+  <header>
+    <div class="eyebrow">Guide · Getting started</div>
+    <h1>Getting started with Diagramium</h1>
+    <p class="lede">From an empty page to a diagram that explains itself — and the file you can put anywhere.
+      Nine steps, about five minutes.</p>
+  </header>
+    <aside class="stage" aria-label="Getting started diagram">
+      <div id="diagram"></div>
+      <div class="stage-bar">
+        <button id="tour" class="primary" type="button">▶ Play the tour</button>
+        <select id="theme" aria-label="Diagram theme">
+          <option value="glassmorphism">Glassmorphism</option>
+          <option value="bento-card">Bento Card</option>
+          <option value="linear-midnight">Linear Midnight</option>
+        </select>
+        <span class="where" id="where">Step 1 of 9</span>
+      </div>
+    </aside>
+<section class="step" id="type" data-step="0">
+  <h2><span class="num">1</span>Pick a diagram type</h2>
+  <p>Diagramium has a dedicated editor for each of <strong>27 diagram types</strong> — sequence, flowchart, architecture,
+    mind map, ER, UML class, swimlane, C4, BPMN, Gantt and more. Open one from <em>Open an editor</em> on the home page,
+    or with <em>Menu → New</em> inside the editor.</p>
+  <p class="note">No account needed. Everything below works the moment the page loads.</p>
+</section>
+
+<section class="step" id="ready-made" data-step="1">
+  <h2><span class="num">2</span>Start from a ready-made</h2>
+  <p>An empty editor opens on its ready-made diagrams — more than 1,500 across all types — with <em>Blank canvas</em>
+    at the top of the list. Pick the one closest to what you need and change it; it is faster than starting
+    from nothing. <em>Explore</em> and <em>Search</em> browse the whole collection.</p>
+</section>
+
+<section class="step" id="draw" data-step="2">
+  <h2><span class="num">3</span>Draw and edit</h2>
+  <p>Drag shapes from the library onto the canvas. To connect two shapes, drag from a dot on one shape's edge to the
+    other. Select a shape and just start typing to replace its label; double-click to edit it. <code>⌘Z</code> undoes
+    anything.</p>
+  <p>Sequence diagrams are written as text instead — each line becomes a message:</p>
+<pre><code>Browser -> API: POST /checkout
+API -> Payments: charge card
+Payments --> API: approved</code></pre>
+</section>
+
+<section class="step" id="notes" data-step="3">
+  <h2><span class="num">4</span>Add a note to each step</h2>
+  <p>Every shape is a step of the explanation, in the order you added it — press <code>O</code> and click the shapes
+    in turn to change the order. In the notes, write what should be said at each step, and optionally a short
+    <em>why this matters</em> line shown beside it.</p>
+</section>
+
+<section class="step" id="pick-a-theme" data-step="4">
+  <h2><span class="num">5</span>Pick a theme</h2>
+  <p>The <em>Theme</em> tab restyles the whole diagram in one click — 23 looks, from Executive Navy and Forest to
+    Glassmorphism, Linear Midnight and Bento Card. Executive Navy and Forest need no account; the rest come with a free
+    account. Colours you set on a shape yourself are kept.</p>
+</section>
+
+<section class="step" id="explain" data-step="5">
+  <h2><span class="num">6</span>Press Explain</h2>
+  <p><em>Explain</em> plays your diagram full screen: shapes appear one at a time while your notes are read aloud by a
+    voice on your own device. <code>←</code> and <code>→</code> step, <code>Space</code> pauses, <code>Esc</code> exits.
+    <em>Record</em> turns the show into a video file.</p>
+</section>
+
+<section class="step" id="export" data-step="6">
+  <h2><span class="num">7</span>Export it</h2>
+  <p><em>Export</em> asks one question first: an image or an animation. PNG, PDF and copying to the clipboard work for
+    everyone. SVG, animated SVG, GIF and video come with a free account. An export can include the step notes and the
+    legend beside the diagram.</p>
+</section>
+
+<section class="step" id="save" data-step="7">
+  <h2><span class="num">8</span>Save it</h2>
+  <p><em>Menu → File → Save</em> (<code>⌘S</code>) writes the diagram as a <code>.json</code> file on your device, and
+    <em>Save as…</em> (<code>⇧⌘S</code>) makes a copy under a new name. The toolbar shows which file you are working on.
+    Diagrams are never uploaded — they live in your browser and in your own files.</p>
+</section>
+
+<section class="step" id="anywhere" data-step="8">
+  <h2><span class="num">9</span>Put it anywhere</h2>
+  <p>That same <code>.json</code> is what <strong>diagramium-player</strong> plays: add it to a docs page, a blog post or a
+    product tour and control it from your own code. The animated version of this guide is one.</p>
+<pre><code>import { DiagramiumPlayer } from 'diagramium-player';
+
+DiagramiumPlayer.fromUrl('/getting-started.json', { container: '#diagram' });</code></pre>
+</section>
+  </main>
+</div>
+
+<script type="module">
+  import { syncDocs } from './sync-docs.js';
+  syncDocs({ file: './getting-started.json', theme: 'glassmorphism' });
+</script>
+</body>
+</html>

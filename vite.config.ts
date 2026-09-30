@@ -11,6 +11,8 @@ import { resolve } from 'node:path';
  * `npm run dev` serves index.html (the demo page) straight from src/.
  */
 export default defineConfig({
+  // `npm run dev`: don't reload the page when a build writes its output.
+  server: { watch: { ignored: ['**/dist/**', '**/demo-dist/**'] } },
   build: {
     target: 'es2019',
     sourcemap: true,
