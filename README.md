@@ -1,5 +1,10 @@
 # diagramium-player
 
+[![npm](https://img.shields.io/npm/v/diagramium-player?color=cb3837&logo=npm)](https://www.npmjs.com/package/diagramium-player)
+[![CI](https://github.com/diagramium/diagramium-player/actions/workflows/ci.yml/badge.svg)](https://github.com/diagramium/diagramium-player/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![gzip size](https://img.shields.io/badge/gzip-~14%20KB-brightgreen)](https://www.npmjs.com/package/diagramium-player)
+
 Play [Diagramium](https://www.diagramium.com) diagrams step by step in any web page — animated, with captions, and fully programmable from your own code.
 
 - **Native files, no converter.** Plays the editor's saved `.json` (File → Save) and the public gallery's diagram files as they are.
@@ -68,9 +73,13 @@ No diagram yet? Make one in the [Diagramium editor](https://www.diagramium.com) 
 
 ## Install
 
+Published on npm as [**diagramium-player**](https://www.npmjs.com/package/diagramium-player):
+
 ```bash
 npm install diagramium-player
 ```
+
+It ships ES module and CommonJS builds with TypeScript types, and has no runtime dependencies.
 
 ```ts
 import { DiagramiumPlayer } from 'diagramium-player';
@@ -88,12 +97,12 @@ player
 player.updateNodeStyle('n5', { text: 'Redis\n12 ms', stroke: '#22c55e', glow: true, badge: { text: 'healthy' } });
 ```
 
-Or without a bundler:
+Or without a bundler, straight from a CDN (pin the version, so a later release can't change your page):
 
 ```html
 <div id="diagram" style="height: 480px"></div>
 <script type="module">
-  import { DiagramiumPlayer } from 'https://cdn.jsdelivr.net/npm/diagramium-player/dist/index.js';
+  import { DiagramiumPlayer } from 'https://cdn.jsdelivr.net/npm/diagramium-player@0.1.0/dist/index.js';
   DiagramiumPlayer.fromUrl('/my-diagram.json', { container: '#diagram', autoplay: true });
 </script>
 ```
