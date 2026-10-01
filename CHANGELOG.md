@@ -2,6 +2,8 @@
 
 ## 0.2.0 — 2026-10-01 — interactive shapes and connectors
 
+Published on npm: https://www.npmjs.com/package/diagramium-player/v/0.2.0
+
 - `nodeclick` and `nodehover` events with the shape's id, label, type and screen rect. Listening for clicks makes shapes keyboard-focusable buttons.
 - `updateEdgeStyle()` / `resetEdgeStyle()`: colour, width, glow, dashes, opacity and a persistent pulse per connector; the arrowhead takes the connector's colour.
 - `getNodeRect()`: a shape's position on screen, for tooltips.

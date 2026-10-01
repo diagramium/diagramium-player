@@ -102,7 +102,7 @@ Or without a bundler, straight from a CDN (pin the version, so a later release c
 ```html
 <div id="diagram" style="height: 480px"></div>
 <script type="module">
-  import { DiagramiumPlayer } from 'https://cdn.jsdelivr.net/npm/diagramium-player@0.1.0/dist/index.js';
+  import { DiagramiumPlayer } from 'https://cdn.jsdelivr.net/npm/diagramium-player@0.2.0/dist/index.js';
   DiagramiumPlayer.fromUrl('/my-diagram.json', { container: '#diagram', autoplay: true });
 </script>
 ```
