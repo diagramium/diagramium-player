@@ -268,7 +268,10 @@ function layoutTree(nodes: LayoutNode[], parentOf: Map<string, string | null>, r
 
 /* ------------------------------------------------------------ normalise -- */
 
-export function normalize(input: unknown, fontOrFamily: string | Partial<ResolvedFont>): NormalizedDiagram {
+/** Diagram types whose editor draws connectors as plain lines (it declares them `directed: false`). */
+const UNDIRECTED_MODES = new Set(['network', 'fishbone', 'usecase', 'erdiagram']);
+
+export function normalize(input: unknown, fontOrFamily: string | Partial<ResolvedFont> = {}): NormalizedDiagram {
   const font: ResolvedFont = typeof fontOrFamily === 'string'
     ? { family: fontOrFamily, size: null, weight: null, scale: 1 }
     : { family: fontOrFamily.family || "Inter, system-ui, sans-serif", size: fontOrFamily.size ?? null,
@@ -307,6 +310,7 @@ export function normalize(input: unknown, fontOrFamily: string | Partial<Resolve
   if (needsTreeLayout) layoutTree(nodes, parentOf, payload.rootId);
 
   const ids = new Set(nodes.map((n) => n.id));
+  const arrow = !UNDIRECTED_MODES.has(mode);
   const rawEdges: DiagramiumEdge[] = [...(payload.edges || []), ...(payload.links || [])];
   const edges: LayoutEdge[] = [];
   for (const e of rawEdges) {
@@ -316,11 +320,12 @@ export function normalize(input: unknown, fontOrFamily: string | Partial<Resolve
       label: typeof e.label === 'string' ? e.label : '',
       dashed: e.style === 'dashed' || e.style === 'dotted',
       bend: isObj(e.bend) && typeof e.bend.x === 'number' && typeof e.bend.y === 'number' ? { x: e.bend.x, y: e.bend.y } : null,
+      arrow,
     });
   }
   // Tree documents: the hierarchy itself is the connector set.
   for (const [id, parent] of parentOf) {
-    if (parent && ids.has(parent)) edges.push({ id: `tree-${parent}-${id}`, from: parent, to: id, label: '', dashed: false, bend: null });
+    if (parent && ids.has(parent)) edges.push({ id: `tree-${parent}-${id}`, from: parent, to: id, label: '', dashed: false, bend: null, arrow: false });
   }
 
   /* Step order: an explicit `order` (node ids; edge ids are skipped — an edge

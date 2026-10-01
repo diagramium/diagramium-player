@@ -117,7 +117,7 @@ Or without a bundler, straight from a CDN (pin the version, so a later release c
 | `autoplay` | `false` | Start playing on mount. |
 | `stepDuration` | `2600` | Milliseconds per step while playing. |
 | `loop` | `false` | Start again after the last step. |
-| `initialStep` | `0` | `-1` = empty stage, `'all'` = the finished diagram. |
+| `initialStep` | `0` | `-1` = empty stage, `'all'` = the finished diagram on its last step, `'overview'` = the finished diagram with no step highlighted. |
 | `showCaption` | `true` | The built-in caption bar with each step's note. |
 | `voice` | `false` | Read notes aloud with an on-device browser voice (silent if the browser has none). |
 | `keyboard` | `true` | ← → step, Space play/pause, Home / End. |
@@ -134,11 +134,15 @@ Or without a bundler, straight from a CDN (pin the version, so a later release c
 | `next()` / `prev()` | Move exactly one step (next animates in; prev is instant). |
 | `goToStep(index)` | Seek instantly. `-1` empties the stage; values clamp. |
 | `goToNode(nodeId)` | Seek to the step that reveals a node. |
+| `showAll()` | The whole diagram with no step highlighted — the resting state for dashboards and reference pages. Any seek or `play()` leaves it; `isOverview` tells you whether it is on. |
 | `updateNodeStyle(id, overrides)` | `text`, `fill`, `stroke`, `strokeWidth`, `strokeDasharray`, `textColor`, `glow`, `opacity`, `badge`, `fontSize`, `fontFamily`, `fontWeight`, `italic`. Persists across seeks. |
 | `resetNodeStyle(id?)` | Drop overrides on one node, or all. |
+| `updateEdgeStyle(id, overrides)` | Restyle a connector: `stroke` (the arrowhead follows), `width`, `glow`, `dashed`, `opacity`, `pulse` (keep the travelling pulse running). Persists across seeks. |
+| `resetEdgeStyle(id?)` | Drop overrides on one connector, or all. |
+| `getNodeRect(id)` | Where a shape is on screen (client coordinates) — for tooltips and menus. `null` if hidden. |
 | `setTheme(presetOrTokens)` | Swap the look without re-rendering. |
 | `setFont(font)` / `getFont()` | Set label type for the whole diagram (see below). `setFont(null)` returns to the document's own fonts. |
-| `on(event, fn)` / `off(...)` | `ready`, `step`, `play`, `pause`, `end`, `error`. `ready` and `step` are sticky: a late subscriber immediately gets the current state. |
+| `on(event, fn)` / `off(...)` | `ready`, `step`, `play`, `pause`, `end`, `error`, `nodeclick`, `nodehover`. `ready` and `step` are sticky: a late subscriber immediately gets the current state. Listening for `nodeclick` makes shapes focusable buttons (Enter / Space activate them); both shape events carry `{ nodeId, label, type, rect, originalEvent }`. |
 | `destroy()` | Remove everything. |
 
 Every method except `destroy` and `getFont` returns the player, so calls chain.

@@ -81,3 +81,11 @@ test('theme presets are present and complete', () => {
     for (const k of ['background', 'nodeBg', 'borderColor', 'fontFamily', 'textColor', 'connectorColor', 'pulseColor']) assert.ok(t[k], k);
   }
 });
+
+test('network cables have no arrowheads; architecture connectors do', () => {
+  const doc = (mode) => ({ app: 'flow-diagram', version: 2, mode, state: {
+    nodes: [{ id: 'a', type: 'server', text: 'A', x: 0, y: 0 }, { id: 'b', type: 'server', text: 'B', x: 200, y: 0 }],
+    edges: [{ id: 'e1', from: 'a', to: 'b' }] } });
+  assert.equal(parseDiagram(doc('network')).edges[0].arrow, false);
+  assert.equal(parseDiagram(doc('architecture')).edges[0].arrow, true);
+});

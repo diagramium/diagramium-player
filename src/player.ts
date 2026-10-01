@@ -18,6 +18,8 @@ import { resolveTheme, safeColor } from './themes';
 import type {
   FontOptions,
   LayoutNode,
+  EdgeStyleOverrides,
+  NodeEvent,
   NodeStyleOverrides,
   NormalizedDiagram,
   PlayerEventMap,
@@ -38,7 +40,7 @@ function svgEl<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<strin
 }
 
 interface NodeView { g: SVGGElement; body: SVGGElement; shape: SVGGraphicsElement; text: SVGTextElement; icon: SVGTextElement | null; badge: SVGGElement | null; node: LayoutNode }
-interface EdgeView { g: SVGGElement; line: SVGPathElement; pulse: SVGPathElement; from: string; to: string; dashed: boolean }
+interface EdgeView { g: SVGGElement; line: SVGPathElement; pulse: SVGPathElement; from: string; to: string; dashed: boolean; arrow: boolean }
 
 let instanceCounter = 0;
 
@@ -70,6 +72,8 @@ export class DiagramiumPlayer {
   private readonly edges = new Map<string, EdgeView>();
   private readonly stepOfNode = new Map<string, number>();
   private readonly overrides = new Map<string, NodeStyleOverrides>();
+  private readonly edgeOverrides = new Map<string, EdgeStyleOverrides>();
+  private readonly arrowColours = new Map<string, string>();   // colour -> marker id
   private readonly listeners = new Map<PlayerEventName, Set<PlayerListener<PlayerEventName>>>();
   private readonly running = new Set<Animation>();
   private index = -1;
@@ -79,6 +83,7 @@ export class DiagramiumPlayer {
   /** Set once `ready` has fired; `ready` and `step` are then replayed to late subscribers. */
   private isReady = false;
   private readonly reduceQuery: MediaQueryList | null;
+  private overview = false;
   private readonly onKey = (e: KeyboardEvent) => this.handleKey(e);
 
   constructor(options: PlayerOptions) {
@@ -136,7 +141,9 @@ export class DiagramiumPlayer {
     this.shadow.append(style, this.rootEl);
     this.applyTheme();
 
-    const start = this.opts.initialStep === 'all' ? this.total - 1 : this.opts.initialStep;
+    const init = this.opts.initialStep;
+    this.overview = init === 'overview';
+    const start = init === 'all' || init === 'overview' ? this.total - 1 : init;
     this.applyStep(Math.max(-1, Math.min(start, this.total - 1)), false);
 
     // Deferred so listeners attached by chaining (`new Player(o).on('ready', …)`) still fire.
@@ -154,11 +161,13 @@ export class DiagramiumPlayer {
   get total(): number { return this.diagram.steps.length; }
   get currentStep(): number { return this.index; }
   get isPlaying(): boolean { return this.playing; }
+  /** True while the whole diagram shows with no step highlighted (see showAll). */
+  get isOverview(): boolean { return this.overview; }
 
   /** Start the chronological sequence (restarts from the top if finished). */
   play(): this {
     if (this.destroyed || this.playing || !this.total) return this;
-    if (this.index >= this.total - 1) this.applyStep(-1, false);
+    if (this.index >= this.total - 1 || this.overview) { this.overview = false; this.applyStep(-1, false); }
     this.playing = true;
     this.rootEl.classList.add('is-playing');
     this.emit('play', { index: this.index });
@@ -197,6 +206,21 @@ export class DiagramiumPlayer {
     return this;
   }
 
+  /**
+   * Show the whole diagram with no step highlighted: every shape at full
+   * strength, no active glow, no travelling pulse (except connectors given
+   * `pulse` through updateEdgeStyle). The resting state for dashboards and
+   * reference pages. Any seek or play() leaves it.
+   */
+  showAll(): this {
+    if (this.destroyed) return this;
+    this.pause();
+    this.overview = true;
+    this.applyStep(this.total - 1, false);
+    this.emit('step', this.stepEvent());
+    return this;
+  }
+
   /** Seek to the step that reveals a given node. */
   goToNode(nodeId: string): this {
     const i = this.stepOfNode.get(nodeId);
@@ -224,6 +248,35 @@ export class DiagramiumPlayer {
       this.paintOverrides(view, {}, true);
     }
     return this;
+  }
+
+  /** Restyle one connector at runtime (live data along a path). Persists across seeks. */
+  updateEdgeStyle(edgeId: string, overrides: EdgeStyleOverrides): this {
+    const view = this.edges.get(edgeId);
+    if (!view) throw new RangeError(`Unknown edge "${edgeId}".`);
+    const merged = { ...this.edgeOverrides.get(edgeId), ...overrides };
+    this.edgeOverrides.set(edgeId, merged);
+    this.paintEdge(view, merged);
+    return this;
+  }
+
+  /** Drop every runtime override on a connector (or all connectors). */
+  resetEdgeStyle(edgeId?: string): this {
+    const ids = edgeId ? [edgeId] : [...this.edgeOverrides.keys()];
+    for (const id of ids) {
+      const view = this.edges.get(id);
+      this.edgeOverrides.delete(id);
+      if (view) this.paintEdge(view, {});
+    }
+    this.applyStep(this.index, false);
+    return this;
+  }
+
+  /** Where a shape is on screen (client coordinates), or null if unknown or hidden. */
+  getNodeRect(nodeId: string): DOMRect | null {
+    const view = this.nodes.get(nodeId);
+    if (!view || !view.g.classList.contains('is-visible')) return null;
+    return view.body.getBoundingClientRect();
   }
 
   /** Swap the look at runtime: a preset name or a (partial) token set. */
@@ -258,6 +311,7 @@ export class DiagramiumPlayer {
   on<K extends PlayerEventName>(event: K, fn: PlayerListener<K>): this {
     if (!this.listeners.has(event)) this.listeners.set(event, new Set());
     this.listeners.get(event)!.add(fn as PlayerListener<PlayerEventName>);
+    if (event === 'nodeclick') this.makeNodesClickable();
     /* STICKY: `ready` and `step` describe current state, so a subscriber that
        arrives after they fired (the normal case after `await fromUrl(…)`)
        still receives them once. Delivered async, like the originals. */
@@ -303,7 +357,7 @@ export class DiagramiumPlayer {
   private rebuild(): void {
     this.running.forEach((a) => a.cancel());
     this._diagram = normalize(this.source, this.resolvedFont());
-    this.nodes.clear(); this.edges.clear(); this.stepOfNode.clear();
+    this.nodes.clear(); this.edges.clear(); this.stepOfNode.clear(); this.arrowColours.clear();
     this._diagram.steps.forEach((s, i) => this.stepOfNode.set(s.nodeId, i));
     const svg = this.buildSvg();
     this.svg.replaceWith(svg);
@@ -313,6 +367,11 @@ export class DiagramiumPlayer {
       const v = this.nodes.get(id);
       if (v) this.paintOverrides(v, o); else this.overrides.delete(id);
     }
+    for (const [id, o] of this.edgeOverrides) {
+      const v = this.edges.get(id);
+      if (v) this.paintEdge(v, o); else this.edgeOverrides.delete(id);
+    }
+    if (this.listeners.get('nodeclick')?.size) this.makeNodesClickable();
     this.applyStep(Math.min(this.index, this.total - 1), false);
   }
 
@@ -320,6 +379,7 @@ export class DiagramiumPlayer {
 
   private goTo(i: number, animate: boolean): void {
     if (this.destroyed) return;
+    this.overview = false;
     this.applyStep(i, animate);
     this.emit('step', this.stepEvent());
     if (this.opts.voice) this.speak();
@@ -348,7 +408,7 @@ export class DiagramiumPlayer {
   private applyStep(i: number, animate: boolean): void {
     const prev = this.index;
     this.index = i;
-    const activeId = i >= 0 ? this.diagram.steps[i]?.nodeId ?? null : null;
+    const activeId = i >= 0 && !this.overview ? this.diagram.steps[i]?.nodeId ?? null : null;
     const motion = animate && this.motionOk;
     this.rootEl.classList.toggle('is-reduced', !this.motionOk);
 
@@ -357,22 +417,22 @@ export class DiagramiumPlayer {
       const visible = s <= i && i >= 0;
       v.g.classList.toggle('is-visible', visible);
       v.g.classList.toggle('is-active', id === activeId);
-      v.g.classList.toggle('is-past', visible && id !== activeId);
+      v.g.classList.toggle('is-past', visible && id !== activeId && !this.overview);
       v.g.setAttribute('aria-hidden', visible ? 'false' : 'true');
       if (motion && visible && s > prev) this.animateIn(v.body, (s - prev - 1) * 90);
     }
-    for (const v of this.edges.values()) {
+    for (const [eid, v] of this.edges) {
       const sa = this.stepOfNode.get(v.from) ?? -1, sb = this.stepOfNode.get(v.to) ?? -1;
       const appearsAt = Math.max(sa, sb);
       const visible = i >= 0 && appearsAt <= i;
       v.g.classList.toggle('is-visible', visible);
       // The pulse runs along the connectors that belong to the active step.
-      v.g.classList.toggle('is-pulsing', visible && (v.from === activeId || v.to === activeId));
+      v.g.classList.toggle('is-pulsing', visible && (v.from === activeId || v.to === activeId || !!this.edgeOverrides.get(eid)?.pulse));
       if (motion && visible && appearsAt > prev && !v.dashed) this.drawIn(v.line);
     }
 
-    const step = i >= 0 ? this.diagram.steps[i] : undefined;
-    this.captionCount.textContent = this.total ? `Step ${Math.max(0, i + 1)} / ${this.total}` : '';
+    const step = i >= 0 && !this.overview ? this.diagram.steps[i] : undefined;
+    this.captionCount.textContent = this.overview ? '' : this.total ? `Step ${Math.max(0, i + 1)} / ${this.total}` : '';
     this.captionNote.textContent = step ? (step.note || this.nodes.get(step.nodeId)?.node.label || '') : (this.diagram.title || '');
     this.captionWhy.textContent = step?.why || '';
     this.captionWhy.hidden = !step?.why;
@@ -402,7 +462,7 @@ export class DiagramiumPlayer {
   }
 
   private stepEvent(): StepEvent {
-    const step = this.index >= 0 ? this.diagram.steps[this.index] : undefined;
+    const step = this.index >= 0 && !this.overview ? this.diagram.steps[this.index] : undefined;
     return {
       index: this.index,
       total: this.total,
@@ -418,6 +478,69 @@ export class DiagramiumPlayer {
       try { (fn as PlayerListener<K>)(payload); }
       catch (error) { if (event !== 'error') this.emit('error', { error: error as Error }); }
     });
+  }
+
+  /* ---- shape events: nodeclick / nodehover ---- */
+  private nodeEvent(v: NodeView, originalEvent: Event): NodeEvent {
+    return { nodeId: v.node.id, label: v.node.label, type: v.node.type, rect: v.body.getBoundingClientRect(), originalEvent };
+  }
+  private wireNodeEvents(v: NodeView): void {
+    const visible = () => v.g.classList.contains('is-visible');
+    v.g.addEventListener('click', (e) => { if (visible()) this.emit('nodeclick', this.nodeEvent(v, e)); });
+    v.g.addEventListener('keydown', (e) => {
+      if (!visible() || (e.key !== 'Enter' && e.key !== ' ')) return;
+      e.preventDefault();
+      e.stopPropagation();                       // not the player's own Space = play/pause
+      this.emit('nodeclick', this.nodeEvent(v, e));
+    });
+    v.g.addEventListener('pointerenter', (e) => { if (visible()) this.emit('nodehover', this.nodeEvent(v, e)); });
+    v.g.addEventListener('pointerleave', (e) => {
+      if (visible()) this.emit('nodehover', { nodeId: null, label: '', type: '', rect: null, originalEvent: e });
+    });
+  }
+  /** Once something listens for clicks, shapes become buttons: focusable, named, with a pointer. */
+  private makeNodesClickable(): void {
+    this.rootEl.classList.add('is-clickable');
+    for (const v of this.nodes.values()) {
+      if (v.g.hasAttribute('tabindex')) continue;
+      v.g.setAttribute('tabindex', '0');
+      v.g.setAttribute('role', 'button');
+      v.g.setAttribute('aria-label', v.node.label.replace(/\n/g, ' '));
+    }
+  }
+
+  /* ---- connector overrides ---- */
+  private paintEdge(v: EdgeView, o: EdgeStyleOverrides): void {
+    const s = v.line.style;
+    const stroke = safeColor(o.stroke);
+    if (stroke) s.setProperty('stroke', stroke); else s.removeProperty('stroke');
+    // The travelling pulse follows the line's own colour, so a red path pulses red.
+    if (stroke) v.g.style.setProperty('--dgm-pulse', stroke); else v.g.style.removeProperty('--dgm-pulse');
+    if (typeof o.width === 'number' && o.width > 0) s.setProperty('stroke-width', String(o.width)); else s.removeProperty('stroke-width');
+    if (o.dashed === true) s.setProperty('stroke-dasharray', '5 4');
+    else if (o.dashed === false) s.setProperty('stroke-dasharray', 'none');
+    else s.removeProperty('stroke-dasharray');
+    const glow = o.glow === true ? this.theme.pulseColor : safeColor(o.glow);
+    if (glow && o.glow !== false) s.setProperty('filter', `drop-shadow(0 0 3px ${glow}) drop-shadow(0 0 8px ${glow})`);
+    else s.removeProperty('filter');
+    if (typeof o.opacity === 'number') v.g.style.setProperty('opacity', String(Math.max(0, Math.min(1, o.opacity))));
+    else v.g.style.removeProperty('opacity');
+    if (v.arrow) v.line.setAttribute('marker-end', `url(#${stroke ? this.arrowFor(stroke) : this.uid + '-arrow'})`);
+    if (o.pulse !== undefined) this.applyStep(this.index, false);
+  }
+  /** One arrowhead marker per colour, so a coloured connector keeps a matching head. */
+  private arrowFor(colour: string): string {
+    const known = this.arrowColours.get(colour);
+    if (known && this.svg.querySelector('#' + known)) return known;
+    const id = `${this.uid}-arrow-${this.arrowColours.size + 1}`;
+    const m = svgEl('marker', { id, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7,
+      orient: 'auto-start-reverse', markerUnits: 'strokeWidth' });
+    const head = svgEl('path', { d: 'M0 0 L10 5 L0 10 L2.5 5 Z' });
+    head.style.setProperty('fill', colour);
+    m.append(head);
+    this.svg.querySelector('defs')!.append(m);
+    this.arrowColours.set(colour, id);
+    return id;
   }
 
   private handleKey(e: KeyboardEvent): void {
@@ -494,12 +617,13 @@ export class DiagramiumPlayer {
       if (!a || !b) continue;
       const { d, mid } = edgePath(a, b, e.bend);
       const g = svgEl('g', { class: 'dgm-edge' + (e.dashed ? ' is-dashed' : ''), 'data-edge-id': e.id });
-      const line = svgEl('path', { d, class: 'dgm-line', pathLength: 100, 'marker-end': `url(#${this.uid}-arrow)` });
+      const line = svgEl('path', { d, class: 'dgm-line', pathLength: 100 });
+      if (e.arrow) line.setAttribute('marker-end', `url(#${this.uid}-arrow)`);
       const pulse = svgEl('path', { d, class: 'dgm-pulse', pathLength: 100 });
       g.append(line, pulse);
       if (e.label) g.append(this.buildEdgeLabel(e.label, mid.x, mid.y));
       gEdges.append(g);
-      this.edges.set(e.id, { g, line, pulse, from: e.from, to: e.to, dashed: e.dashed });
+      this.edges.set(e.id, { g, line, pulse, from: e.from, to: e.to, dashed: e.dashed, arrow: e.arrow });
     }
 
     nodes.forEach((n, idx) => {
@@ -530,6 +654,7 @@ export class DiagramiumPlayer {
       (n.shape === 'group' ? gBack : gNodes).append(g);
       const view: NodeView = { g, body, shape, text, icon, badge: null, node: n };
       this.nodes.set(n.id, view);
+      this.wireNodeEvents(view);
       this.renderLabel(view, {});
     });
     svg.append(gBack, gEdges, gNodes);
@@ -807,6 +932,9 @@ const PLAYER_CSS = `
   filter: drop-shadow(0 0 5px var(--dgm-pulse)) drop-shadow(0 0 14px color-mix(in srgb, var(--dgm-pulse) 55%, transparent));
   animation: dgm-breathe 2.4s ease-in-out infinite; }
 @keyframes dgm-breathe { 50% { filter: drop-shadow(0 0 2px var(--dgm-pulse)) drop-shadow(0 0 8px color-mix(in srgb, var(--dgm-pulse) 35%, transparent)); } }
+.is-clickable .dgm-node.is-visible { cursor: pointer; }
+.dgm-node:focus { outline: none; }
+.dgm-node:focus-visible .dgm-shape { stroke: var(--dgm-pulse); stroke-width: 2.6; }
 .dgm-badge rect { fill: var(--dgm-pulse); }
 .dgm-badge text { fill: #fff; font: 700 10px var(--dgm-font); }
 

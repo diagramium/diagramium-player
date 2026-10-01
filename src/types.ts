@@ -157,8 +157,9 @@ export interface PlayerOptions {
   stepDuration?: number;
   /** Wrap to step 0 after the last step while playing. Default false. */
   loop?: boolean;
-  /** Step to show on mount: -1 = empty stage, 0 = first step, 'all' = finished diagram. Default 0. */
-  initialStep?: number | 'all';
+  /** Step to show on mount: -1 = empty stage, 0 = first step, 'all' = finished diagram on its
+      last step, 'overview' = finished diagram with no step highlighted (see showAll). Default 0. */
+  initialStep?: number | 'all' | 'overview';
   /** Built-in caption bar with the step's note. Default true. */
   showCaption?: boolean;
   /** Read each step's note aloud with the browser's speech engine. Default false.
@@ -216,6 +217,21 @@ export interface NodeStyleOverrides {
   italic?: boolean;
 }
 
+/** Runtime restyle for one connector (live data along a path). */
+export interface EdgeStyleOverrides {
+  /** Line colour; the arrowhead follows it. */
+  stroke?: string;
+  /** Line width in document units. */
+  width?: number;
+  /** true = theme pulse colour; a string = that colour; false = off. */
+  glow?: boolean | string;
+  /** Dashed (true) or solid (false), whatever the file says. */
+  dashed?: boolean;
+  opacity?: number;
+  /** Keep the travelling pulse running on this connector, not only on the active step's. */
+  pulse?: boolean;
+}
+
 export interface StepEvent {
   /** 0-based step index; -1 = nothing revealed. */
   index: number;
@@ -229,6 +245,19 @@ export interface StepEvent {
   label: string;
 }
 
+/** A shape the pointer or keyboard acted on (nodeclick / nodehover). */
+export interface NodeEvent {
+  /** The shape's id in the file; null on nodehover when the pointer leaves a shape. */
+  nodeId: string | null;
+  /** The shape's label (first line breaks kept as \n). '' when nodeId is null. */
+  label: string;
+  /** The shape's type in the file ('service', 'database', 'group', …). */
+  type: string;
+  /** Where the shape is on screen (client coordinates), for tooltips and menus. null when leaving. */
+  rect: DOMRect | null;
+  originalEvent: Event;
+}
+
 export interface PlayerEventMap {
   ready: { total: number; title: string };
   step: StepEvent;
@@ -236,6 +265,11 @@ export interface PlayerEventMap {
   pause: { index: number };
   end: { total: number };
   error: { error: Error };
+  /** A visible shape was clicked (or activated with Enter / Space when focused).
+      Subscribing makes shapes focusable and shows a pointer cursor. */
+  nodeclick: NodeEvent;
+  /** The pointer entered a visible shape — or left it (nodeId null). */
+  nodehover: NodeEvent;
 }
 
 export type PlayerEventName = keyof PlayerEventMap;
@@ -290,6 +324,8 @@ export interface LayoutEdge {
   label: string;
   dashed: boolean;
   bend: { x: number; y: number } | null;
+  /** Arrowhead at the target end. False where the editor draws plain lines (network cables, mind-map branches…). */
+  arrow: boolean;
 }
 
 export interface NormalizedDiagram {
